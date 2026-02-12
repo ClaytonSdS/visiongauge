@@ -4,7 +4,7 @@ setup(
     name="VisionGauge",
     version="0.0.1",
     description="A computer vision model to detect and read u-tube manometers.",
-    long_description=open("README.txt", "r", encoding="utf-8").read(),
+    long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     python_requires=">=3.12,<3.15",
     packages=find_packages(),

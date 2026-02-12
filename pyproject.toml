@@ -1,0 +1,29 @@
+[project]
+name = "VisionGauge"
+dynamic = ["version"]
+description = "A computer vision model to detect and read u-tube manometers."
+readme = {file = "README.txt", content-type = "text/markdown"}
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.9.0",
+    "torchvision>=0.24.0",
+    "ultralytics>=8.4.14",
+    "huggingface_hub>=1.4.0",
+    "albumentations>=2.0.8",
+    "tqdm>=4.67.3",
+    "cv2>=4.13.0"
+]
+authors = [
+  {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"},
+  {name = "Marcos Noboru Arima", email = "mnoboru@n-thermo.com.br"},
+
+]
+maintainers = [
+  {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"}
+]
+
+
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+

@@ -1,5 +1,5 @@
 [project]
-name = "visiongauge"
+name = "visiongauge"       
 version = "0.0.1"
 description = "A computer vision model to detect and read u-tube manometers."
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -21,10 +21,9 @@ maintainers = [
   {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"}
 ]
 
-# <-- indica que o pacote está na raiz
 [tool.poetry]
 packages = [
-    { include = ".", from = "." }
+    { include = "VisionGauge", from = "." }
 ]
 
 [build-system]

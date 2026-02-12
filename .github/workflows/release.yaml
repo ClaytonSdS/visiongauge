@@ -1,4 +1,4 @@
-name: release
+name: Release ${{ github.ref_name }} workflow
 
 on:
   push:

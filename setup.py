@@ -6,7 +6,7 @@ setup(
     description="A computer vision model to detect and read u-tube manometers.",
     long_description=open("README.txt", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.12",
+    python_requires=">=3.12,<3.15",
     packages=find_packages(),
     install_requires=[
         "torch>=2.9.0",
@@ -15,7 +15,7 @@ setup(
         "huggingface_hub>=1.4.0",
         "albumentations>=2.0.8",
         "tqdm>=4.67.3",
-        "opencv-python>=4.13.0"  # cv2 no PyPI é instalado via opencv-python
+        "opencv-python>=4.13.0"
     ],
     author="Clayton Silva dos Santos, Marcos Noboru Arima",
     author_email="santoscsdos@gmail.com, mnoboru@n-thermo.com.br",

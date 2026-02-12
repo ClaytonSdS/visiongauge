@@ -1,7 +1,6 @@
 [project]
 name = "VisionGauge"
 version = "0.0.1"
-dynamic = ["version"]
 description = "A computer vision model to detect and read u-tube manometers."
 readme = {file = "README.txt", content-type = "text/markdown"}
 requires-python = ">=3.12"

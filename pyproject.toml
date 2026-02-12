@@ -12,7 +12,7 @@ dependencies = [
     "huggingface_hub>=1.4.0",
     "albumentations>=2.0.8",
     "tqdm>=4.67.3",
-    "cv2>=4.13.0"
+    "opencv-python>=4.13.0"
 ]
 authors = [
   {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"},

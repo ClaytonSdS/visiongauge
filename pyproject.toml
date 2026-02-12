@@ -23,6 +23,10 @@ maintainers = [
   {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"}
 ]
 
+[tool.poetry]
+packages = [
+    { include = "VisionGauge" }
+]
 
 [build-system]
 requires = ["setuptools >= 77.0.3"]

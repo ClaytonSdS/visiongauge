@@ -1,3 +1,4 @@
+
 import numpy as np
 from torch.utils.data import Dataset
 from datasets import load_dataset
@@ -115,4 +116,3 @@ class Samples:
 
         return torch.stack(tensor_list)
 
-s = Samples()

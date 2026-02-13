@@ -6,7 +6,7 @@ setup(
     description="A computer vision model to detect and read u-tube manometers.",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.11,<3.15",
+    python_requires=">=3.9,<3.15",
     packages=find_packages(where="."),  # procura na raiz
     install_requires=[
         "torch>=2.9.0",
@@ -17,7 +17,7 @@ setup(
         "albumentations>=2.0.8",
         "tqdm>=4.67.3",
         "opencv-python>=4.13.0",
-        "numpy>=2.0.2",
+        "numpy>=2.0",
         "matplotlib>=3.10.0"
     ],
     author="Clayton Silva dos Santos, Marcos Noboru Arima",

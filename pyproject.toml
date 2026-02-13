@@ -3,7 +3,7 @@ name = "visiongauge"
 version = "0.0.1"
 description = "A computer vision model to detect and read u-tube manometers."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.9,<3.15"
 dependencies = ["torch>=2.9.0",
         "torchvision>=0.24.0",
         "ultralytics>=8.4.14",
@@ -12,7 +12,7 @@ dependencies = ["torch>=2.9.0",
         "albumentations>=2.0.8",
         "tqdm>=4.67.3",
         "opencv-python>=4.13.0",
-        "numpy>=2.0.2",
+        "numpy>=2.0",
         "matplotlib>=3.10.0"]
 authors = [
   {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"},

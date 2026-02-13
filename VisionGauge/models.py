@@ -263,7 +263,7 @@ class VisionGauge:
 
     def predict_streaming(
     self,
-    camera: cv2.VideoCapture, frame_height: int = 1280, frame_width: int = 760,
+    camera: cv2.VideoCapture, frame_height: int = 1280, frame_width: int = 720,
     frame_color: str = "#551bb3",
     font_color: str = "#ffffff",
     fontsize: int = 10,

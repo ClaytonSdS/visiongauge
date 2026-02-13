@@ -122,6 +122,7 @@ class VisionGauge:
         return boxes
 
     def get_bounding_boxes(self, X):
+        import numpy as np
         """
         Detect bounding boxes for a batch of images and pad to match shapes.
 

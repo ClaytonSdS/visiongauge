@@ -3,11 +3,11 @@
 
 This work proposes a computer vision model based on the sequential implementation of machine learning models for the detection and reading of water column gauges, called **VisionGauge**. 
 
-The solution consists of two sequential stages: a **detection model** and a **regression model**. The architecture adopted for the detector is based on the state-of-the-art **YOLOv8** model, while for the regressor, a comparative study was conducted among the **ResNet-18**, **EfficientNetB0**, **MobileNetV3 Small**, and **MobileNetV3 Large** architectures, all adapted for the regression task. 
+The solution consists of two sequential stages: a **detection model** and a **regression model**. The architecture adopted for the detector is based on the state-of-the-art **YOLOv8** model, while for the regressor, the architeture was the **ResNet-18** adapted for the regression task. 
 
 During training, custom datasets were developed, specific to the training domains of the detector, the regressor, and, finally, for the complete evaluation of the VisionGauge model in both **static** and **streaming** modes. 
 
-The best results composing VisionGauge were obtained with the YOLOv8 model, achieving an **F1-Score of 86.4%**, together with the ResNet-18 architecture, which achieved an **MAE of 1.872**, both evaluated on the test dataset. Additionally, in the streaming mode evaluation, the model achieved an **average oscillation score (Φ) of 70%**.
+The best results composing VisionGauge were obtained with the detector model, achieving an **F1-Score of 86.4%**, together with the regressor architecture, which achieved an **MAE of 1.872**, both evaluated on the test dataset. Additionally, in the streaming mode evaluation, the model achieved an **average global oscillation score (Φ) of 70%**.
 
 <img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/visiongauge.png?raw=true" alt="model" width="800"/>
 
@@ -80,4 +80,27 @@ model.plot_batch(0)
 ```
 <img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/output_example.png?raw=true" alt="model" width="300"/>
 
+## Inference Example III: Frame Streaming
 
+To perform inference on a video stream, you must provide an OpenCV capture object as input, like this:
+
+```python
+from VisionGauge.models import VisionGauge
+import cv2
+
+# Initialize the model
+model = VisionGauge()
+
+# Set your camera object
+camera = cv2.VideoCapture(0)
+
+# Run inference
+model.predict_streaming(
+    camera,
+    frame_height=1280,
+    frame_width=720,
+    frame_thickness=4,
+    frame_color="#551bb3",
+    font_color="#ffffff",
+    fontsize=10
+)

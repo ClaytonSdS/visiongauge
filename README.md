@@ -1,13 +1,13 @@
 # VisionGauge: A computer vision model to detect and read u-tube manometers
 
+This work proposes a computer vision model based on the sequential implementation of machine learning models for the detection and reading of water column gauges, called VisionGauge.
 
-This work proposes a computer vision model based on the sequential implementation of machine learning models for the detection and reading of water column gauges, called **VisionGauge**. 
+The solution consists of two sequential stages: a detection model and a regression model. The architecture adopted for the detector is based on the state-of-the-art YOLOv8 model, while for the regressor, the architecture was ResNet-18, adapted for the regression task.
 
-The solution consists of two sequential stages: a **detection model** and a **regression model**. The architecture adopted for the detector is based on the state-of-the-art **YOLOv8** model, while for the regressor, the architeture was the **ResNet-18** adapted for the regression task. 
+During training, custom datasets were developed, specific to the training domains of the detector, the regressor, and, finally, for the complete evaluation of the VisionGauge model in both static and streaming modes.
 
-During training, custom datasets were developed, specific to the training domains of the detector, the regressor, and, finally, for the complete evaluation of the VisionGauge model in both **static** and **streaming** modes. 
+The best results composing VisionGauge were obtained with the detector model, achieving an F1-Score of 86.4%, together with the regressor architecture, which achieved an MAE of 1.872, both evaluated on the test dataset. Additionally, in the streaming mode evaluation, the model achieved an average global oscillation score (Φ) of 70%.
 
-The best results composing VisionGauge were obtained with the detector model, achieving an **F1-Score of 86.4%**, together with the regressor architecture, which achieved an **MAE of 1.872**, both evaluated on the test dataset. Additionally, in the streaming mode evaluation, the model achieved an **average global oscillation score (Φ) of 70%**.
 
 <img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/visiongauge.png?raw=true" alt="model" width="800"/>
 <a id="top"></a>
@@ -63,6 +63,7 @@ The number of boxes is determined based on the image with the highest number of 
 max(bounding_boxes_predicted). This ensures that the predictions tensor has a uniform shape (batch, max_boxes, 1) across the entire batch.
 """
 ```
+[↑ Top](#top)
 
 ## Inference Example II: Tensor input
 The model also accepts a tensor in the shape (batch, channels=3, height, width):
@@ -92,6 +93,8 @@ model.plot_batch(0)
 ```
 <img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/output_example.png?raw=true" alt="model" width="300"/>
 
+[↑ Top](#top)
+
 ## Inference Example III: Frame Streaming
 
 To perform inference on a video stream, you must provide an OpenCV capture object as input, like this:
@@ -117,6 +120,7 @@ model.predict_streaming(
     fontsize=10
 )
 ```
+[↑ Top](#top)
 
 # Citation
 

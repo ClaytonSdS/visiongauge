@@ -1,5 +1,6 @@
 
 #%%
+from unittest import loader
 import numpy as np
 from matplotlib import image
 import torch 
@@ -11,6 +12,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2   
 from tqdm import tqdm
 import cv2
+import matplotlib.pyplot as plt
 
 class Regressor(nn.Module):
     def __init__(self, image_size: tuple = (120, 120)):
@@ -206,21 +208,25 @@ class VisionGauge:
             This ensures that the predictions tensor has uniform shape (batch, max_boxes, 1) 
             across the batch.
 
-
         Returns:
             tuple:
                 - torch.Tensor: Bounding boxes (batch, max_boxes, 4)
                 - torch.Tensor: Predictions (batch, max_boxes, 1)
         """
+
         all_boxes = []
         all_predictions = []
 
-        # Check if X is a DataLoader or iterable
+        # If input is a DataLoader
         if isinstance(X, torch.utils.data.DataLoader):
+            self.loader = X  # save loader for plotting
             iterator = X
         else:
-            # Wrap single tensor into batches of 1
-            iterator = [x.unsqueeze(0) for x in X]
+            # If input is a tensor, create a "mini-loader" internally
+            if X.ndim == 3:  # single image
+                X = X.unsqueeze(0)
+            self.loader = torch.utils.data.DataLoader(X, batch_size=16, shuffle=False)
+            iterator = self.loader
 
         # Iterate over batches
         for batch in tqdm(iterator, desc="Processing batches"):
@@ -251,8 +257,64 @@ class VisionGauge:
             all_predictions.append(Y_Tensor)
 
         # Concatenate all batches
-        all_boxes = torch.cat(all_boxes, dim=0)
-        all_predictions = torch.cat(all_predictions, dim=0)
+        self.all_boxes = torch.cat(all_boxes, dim=0)
+        self.all_predictions = torch.cat(all_predictions, dim=0)
 
-        return all_boxes, all_predictions
+        return self.all_boxes, self.all_predictions
 
+    def plot_batch(self, batch_number:int=0, figsize:tuple=(6,6)):
+        # Check if predictions exist
+        if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):
+            raise ValueError("No predictions available. Please run predict() first.")
+        
+        # Check if batch_number is valid
+        if batch_number >= len(self.all_boxes):
+            raise ValueError(f"Invalid batch number. Must be between 0 and {self.all_boxes.shape[0]-1}.")
+
+        # Iterate over the loader saved in self
+        for batch_idx, batch_images in enumerate(self.loader):
+            if batch_idx != batch_number:
+                continue  # skip batches that are not the chosen one
+
+            batch_boxes = self.all_boxes[batch_idx]
+            batch_preds = self.all_predictions[batch_idx]
+
+            # Ensure batch_boxes is 2D
+            if batch_boxes.dim() == 1:
+                batch_boxes = batch_boxes.unsqueeze(0)
+                batch_preds = batch_preds.unsqueeze(0)
+
+            # Iterate over all images in the batch
+            for img_idx in range(batch_images.shape[0]):
+                image = batch_images[img_idx].permute(1, 2, 0).cpu().numpy()  # convert to HWC
+
+                plt.figure(figsize=figsize)
+                plt.imshow(image.astype('uint8'))
+
+                # Draw boxes
+                for box_idx, box in enumerate(batch_boxes):
+                    x1, y1, x2, y2 = box.int().tolist()
+                    pred = batch_preds[box_idx].item()
+
+                    # Skip dummy boxes
+                    if x1 == y1 == x2 == y2 == 0:
+                        continue
+
+                    # Bounding box in color #551bb3
+                    rect = plt.Rectangle(
+                        (x1, y1), x2-x1, y2-y1, 
+                        edgecolor='#551bb3', facecolor='none', linewidth=2
+                    )
+                    plt.gca().add_patch(rect)
+
+                    # Prediction text in black and bold
+                    plt.text(
+                        x1, y1-5, f'$h_p$ = {pred:.2f}', 
+                        color='black', fontsize=12, fontweight='bold',
+                        bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1)
+                    )
+
+                plt.axis('off')
+                plt.show()
+            
+            break  # stop after plotting the chosen batch

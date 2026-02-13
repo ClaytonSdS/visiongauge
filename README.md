@@ -26,16 +26,18 @@ from torch.utils.data import DataLoader
 from VisionGauge.models import VisionGauge
 from VisionGauge.dataset import ImageDataset
 
+# Samples must be a list containing the paths to all images.
+# All images must have the same dimensions (height, width, channels).
 samples = ["/content/sample3.jpg", "/content/sample4.jpg"]
 
 # Initialize the model
 model = VisionGauge()
 
-# Prepare the dataset and dataloader
+# Prepare dataset and DataLoader
 dataset = ImageDataset(samples)
 loader = DataLoader(dataset, batch_size=16, shuffle=False)
 
-# Run predictions
+# Run inference
 boxes, predictions = model.predict(loader)
 
 # boxes: Returns a torch.Tensor with shape (batch, max_boxes, 4), i.e. boxes[batch, box] = tensor([x1, y1, x2, y2]) coordinates of the current the bounding box.
@@ -59,19 +61,21 @@ from torch.utils.data import DataLoader
 from VisionGauge.models import VisionGauge
 from VisionGauge.dataset import ImageDataset, Samples
 
-samples = Samples().get_tensors() # your tensor in the shape (batch_size, 3, height, width), e.g., samples = torch.rand((batch_size, 3, 120, 120))
+# Example tensor in the shape (batch_size, 3, height, width)
+# e.g., samples = torch.rand((batch_size, 3, 120, 120))
+samples = Samples().get_tensors()
 
 # Initialize the model
 model = VisionGauge()
 
-# Prepare the dataset and dataloader
+# Prepare dataset and DataLoader
 dataset = ImageDataset(samples)
 loader = DataLoader(dataset, batch_size=16, shuffle=False)
 
-# Run predictions
+# Run inference
 boxes, predictions = model.predict(loader)
 
-# Show the batch prediction
+# Plot predictions for image index 0
 model.plot_batch(0)
 ```
 <img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/output_example.png?raw=true" alt="model" width="300"/>

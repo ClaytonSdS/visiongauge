@@ -13,6 +13,7 @@ from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 class Regressor(nn.Module):
     def __init__(self, image_size: tuple = (120, 120)):
@@ -262,48 +263,57 @@ class VisionGauge:
 
         return self.all_boxes, self.all_predictions
 
-    def predict_streaming(self, camera, display: bool = True):
+    def predict_streaming(
+    self,
+    camera,
+    frame_color: str = "#551bb3",
+    font_color: str = "#ffffff",
+    fontsize: int = 10,
+    frame_thickness: int = 2,
+    display: bool = True
+):
         """
         Run real-time detection and regression on a live video stream.
 
-        This method continuously captures frames from a camera object,
-        applies the object detector to obtain bounding boxes, crops each
-        detected region, applies preprocessing transformations, and runs
-        the regression model to estimate the corresponding h_p value.
-
-        The bounding boxes and predicted values are drawn directly on
-        the video frame using OpenCV and displayed in real time.
+        Draws bounding boxes and predicted values on each detected object.
+        The predicted value is displayed inside a filled rectangle positioned
+        above the bounding box.
 
         Parameters
         ----------
         camera : cv2.VideoCapture
-            An OpenCV video capture object (or any object implementing
-            a `.read()` method that returns (ret, frame)).
+            OpenCV capture object.
+
+        frame_color : str, optional
+            Bounding box and label background color in HEX format.
+
+        font_color : str, optional
+            Text color in HEX format.
+
+        fontsize : int, optional
+            Base font scaling factor (OpenCV scale = fontsize / 10).
+
+        frame_thickness : int, optional
+            Thickness of bounding box and text stroke.
 
         display : bool, optional
-            If True, displays the annotated video stream in a window.
-            Default is True.
-
-        Notes
-        -----
-        - Press the 'q' key to exit the streaming loop.
-        - The detector operates on full frames.
-        - The regressor operates on cropped regions resized to (120, 120).
-        - All computations are performed using the device configured
-        in the model (CPU or CUDA).
-
-        Raises
-        ------
-        RuntimeError
-            If the camera fails to provide frames.
+            If True, displays the annotated stream.
         """
+
+        import matplotlib.colors as mcolors
+
+        # Convert HEX → BGR
+        rgb = mcolors.to_rgb(frame_color)
+        frame_color_tuple = tuple(int(c * 255) for c in rgb[::-1])
+
+        rgb_font = mcolors.to_rgb(font_color)
+        font_color_tuple = tuple(int(c * 255) for c in rgb_font[::-1])
 
         while True:
             ret, frame = camera.read()
             if not ret:
                 raise RuntimeError("Failed to capture frame from camera.")
 
-            # Detect bounding boxes
             boxes = self.predict_bounding_boxes(frame)
 
             for box in boxes:
@@ -312,30 +322,61 @@ class VisionGauge:
                 if x1 == y1 == x2 == y2 == 0:
                     continue
 
-                # Crop detected region
+                # Draw bounding box
+                cv2.rectangle(
+                    frame,
+                    (x1, y1),
+                    (x2, y2),
+                    frame_color_tuple,
+                    frame_thickness
+                )
+
+                # Crop and preprocess
                 crop = frame[y1:y2, x1:x2]
                 h, w = crop.shape[:2]
                 max_size = max(h, w)
 
-                # Apply preprocessing
                 crop = self.add_Transformation(crop, min_size=max_size).unsqueeze(0)
 
-                # Run regression
                 with torch.no_grad():
                     pred = self.regressor(crop).item()
 
-                # Draw bounding box (VisionGauge official color #551bb3)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (85, 27, 179), 5)
+                label = f"h_p = {pred:.2f}"
 
-                # Draw predicted value
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = fontsize / 10
+
+                (text_width, text_height), baseline = cv2.getTextSize(
+                    label, font, font_scale, frame_thickness
+                )
+
+                # Dynamic padding proportional to thickness
+                padding = 5 + frame_thickness * 2
+
+                rect_x1 = x1
+                rect_x2 = x1 + text_width + padding
+
+                rect_y1 = max(0, y1 - text_height - padding)
+                rect_y2 = rect_y1 + text_height + padding
+
+                # Draw filled rectangle (label background)
+                cv2.rectangle(
+                    frame,
+                    (rect_x1, rect_y1),
+                    (rect_x2, rect_y2),
+                    frame_color_tuple,
+                    -1
+                )
+
+                # Draw text
                 cv2.putText(
                     frame,
-                    f"h_p = {pred:.2f}",
-                    (x1, y1 - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 0, 0),
-                    2
+                    label,
+                    (rect_x1 + padding // 2, rect_y2 - padding // 2),
+                    font,
+                    font_scale,
+                    font_color_tuple,
+                    frame_thickness
                 )
 
             if display:
@@ -346,6 +387,7 @@ class VisionGauge:
 
         camera.release()
         cv2.destroyAllWindows()
+
 
 
     def plot_batch(self, index: int=0, figsize: tuple = (6, 6)):

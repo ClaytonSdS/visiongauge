@@ -46,7 +46,6 @@ class ImageDataset(Dataset):
             return self.images[idx]
 
 
-
 class Samples:
     """
     A class to load sample images directly from the Hugging Face UTM_Samples dataset.
@@ -57,20 +56,28 @@ class Samples:
         A list containing the images in RGB format.
     """
 
-    def __init__(self):
+    def __init__(self, n_samples=None):
         """
         Initializes the Samples class by loading n_samples images from the
         Hugging Face UTM_Samples dataset.
         """
+
         dataset = load_dataset("claytonsds/UTM_Samples", split="train")
         self.images = []
 
-        for sample in dataset.select(range(30)):
+        # Use the minimum between requested n_samples and the dataset length
+        n_samples = n_samples or len(dataset)
+        n_samples = min(n_samples, len(dataset))
+
+        # Load images
+        for sample in dataset.select(range(n_samples)):
             img = sample["image"]
 
+            # Convert PIL image to numpy array if necessary
             if hasattr(img, "convert"):
                 img = np.array(img)
 
+            # Ensure the image dtype is uint8
             if img.dtype != np.uint8:
                 img = (img * 255).astype(np.uint8)
 
@@ -89,3 +96,7 @@ class Samples:
         """
         tensor = torch.stack([torch.from_numpy(img).permute(2, 0, 1).float() for img in self.images])
         return tensor
+
+
+
+s = Samples()

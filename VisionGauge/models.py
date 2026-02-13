@@ -262,6 +262,92 @@ class VisionGauge:
 
         return self.all_boxes, self.all_predictions
 
+    def predict_streaming(self, camera, display: bool = True):
+        """
+        Run real-time detection and regression on a live video stream.
+
+        This method continuously captures frames from a camera object,
+        applies the object detector to obtain bounding boxes, crops each
+        detected region, applies preprocessing transformations, and runs
+        the regression model to estimate the corresponding h_p value.
+
+        The bounding boxes and predicted values are drawn directly on
+        the video frame using OpenCV and displayed in real time.
+
+        Parameters
+        ----------
+        camera : cv2.VideoCapture
+            An OpenCV video capture object (or any object implementing
+            a `.read()` method that returns (ret, frame)).
+
+        display : bool, optional
+            If True, displays the annotated video stream in a window.
+            Default is True.
+
+        Notes
+        -----
+        - Press the 'q' key to exit the streaming loop.
+        - The detector operates on full frames.
+        - The regressor operates on cropped regions resized to (120, 120).
+        - All computations are performed using the device configured
+        in the model (CPU or CUDA).
+
+        Raises
+        ------
+        RuntimeError
+            If the camera fails to provide frames.
+        """
+
+        while True:
+            ret, frame = camera.read()
+            if not ret:
+                raise RuntimeError("Failed to capture frame from camera.")
+
+            # Detect bounding boxes
+            boxes = self.predict_bounding_boxes(frame)
+
+            for box in boxes:
+                x1, y1, x2, y2 = box.astype(int)
+
+                if x1 == y1 == x2 == y2 == 0:
+                    continue
+
+                # Crop detected region
+                crop = frame[y1:y2, x1:x2]
+                h, w = crop.shape[:2]
+                max_size = max(h, w)
+
+                # Apply preprocessing
+                crop = self.add_Transformation(crop, min_size=max_size).unsqueeze(0)
+
+                # Run regression
+                with torch.no_grad():
+                    pred = self.regressor(crop).item()
+
+                # Draw bounding box (VisionGauge official color #551bb3)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (85, 27, 179), 5)
+
+                # Draw predicted value
+                cv2.putText(
+                    frame,
+                    f"h_p = {pred:.2f}",
+                    (x1, y1 - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 0, 0),
+                    2
+                )
+
+            if display:
+                cv2.imshow("VisionGauge Streaming", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+        camera.release()
+        cv2.destroyAllWindows()
+
+
     def plot_batch(self, index: int=0, figsize: tuple = (6, 6)):
         """
         Plot all detected bounding boxes for a specific image, including
@@ -365,5 +451,4 @@ class VisionGauge:
 
         # Remove axes for cleaner visualization
         plt.axis("off")
-        plt.title(f"Image {index}")
         plt.show()

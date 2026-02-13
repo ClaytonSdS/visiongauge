@@ -54,11 +54,12 @@ max(bounding_boxes_predicted). This ensures that the predictions tensor has a un
 The model also accepts a tensor in the shape (batch, channels=3, height, width):
 
 ```python
+import torch
 from torch.utils.data import DataLoader
 from VisionGauge.models import VisionGauge
-from VisionGauge.dataset import ImageDataset
+from VisionGauge.dataset import ImageDataset, Samples
 
-samples = ["/content/sample3.jpg", "/content/sample4.jpg"]
+samples = Samples().get_tensors() # your tensor in the shape (batch_size, 3, height, width), e.g., samples = torch.rand((batch_size, 3, 120, 120))
 
 # Initialize the model
 model = VisionGauge()
@@ -69,17 +70,6 @@ loader = DataLoader(dataset, batch_size=16, shuffle=False)
 
 # Run predictions
 boxes, predictions = model.predict(loader)
-
-# boxes: Returns a torch.Tensor with shape (batch, max_boxes, 4), i.e. boxes[batch, box] = tensor([x1, y1, x2, y2]) coordinates of the current the bounding box.
-# predictions: Returns a torch.Tensor with shape (batch, max_boxes, 1) i.e. predictions[batch, box] = tensor([h_p]) fluid height predicted for the current the bounding box.
-
-"""
- Note:
-Since some images can generate more than one bounding box, dummy boxes with all-zero coordinates are created,
-and the corresponding prediction is set to 0 to maintain consistency and shape during forward propagation.
-The number of boxes is determined based on the image with the highest number of predicted bounding boxes, i.e.,
-max(bounding_boxes_predicted). This ensures that the predictions tensor has a uniform shape (batch, max_boxes, 1) across the entire batch.
-"""
 ```
 
 

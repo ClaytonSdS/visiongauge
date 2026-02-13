@@ -97,10 +97,10 @@ camera = cv2.VideoCapture(0)
 # Run inference
 model.predict_streaming(
     camera,
-    frame_color="#551bb3",
     frame_height=1280,
-    frame_width=760,
+    frame_width=720,
+    frame_thickness=4,
+    frame_color="#551bb3",
     font_color="#ffffff",
-    fontsize=10,
-    frame_thickness=4
+    fontsize=10
 )

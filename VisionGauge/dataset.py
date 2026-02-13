@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 from torch.utils.data import Dataset
 from datasets import load_dataset
@@ -96,7 +97,3 @@ class Samples:
         """
         tensor = torch.stack([torch.from_numpy(img).permute(2, 0, 1).float() for img in self.images])
         return tensor
-
-
-
-s = Samples()

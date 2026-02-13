@@ -1,4 +1,5 @@
 
+#%%
 import numpy as np
 from matplotlib import image
 import torch 
@@ -139,32 +140,36 @@ class VisionGauge:
             the remaining boxes are filled with zeros. This ensures that the 
             returned tensor has a uniform shape across the batch.
         """
+        
+        # Ensure input is a batch tensor
+        if X.ndim == 3:
+            X = X.unsqueeze(0)
+
         batch = X.shape[0]
         raw_boxes = []
 
         for i in range(batch):
-            # Convert tensor to numpy image (C, H, W) -> (H, W, C)
-            img_np = (X[i].permute(1, 2, 0).cpu().numpy())
-
-            # Predict bounding boxes for the image
-            boxes = self.predict_bounding_boxes(img_np)  # shape (num_boxes, 4)
+            # Convert tensor to numpy image (C,H,W) -> (H,W,C)
+            img_np = X[i].permute(1, 2, 0).cpu().numpy()
+            boxes = self.predict_bounding_boxes(img_np)  # (num_boxes,4)
             raw_boxes.append(boxes)
 
-        # Find the maximum number of boxes in the batch
+        # Find the maximum number of boxes detected in any image in the batch
         max_boxes = max(b.shape[0] for b in raw_boxes)
 
-        # Pad boxes so all images have the same number of boxes (num_boxes -> max_boxes)
+        # Add padding to ensure all have the same number of boxes (max_boxes)
         padded_boxes = []
         for boxes in raw_boxes:
             pad_size = max_boxes - boxes.shape[0]
             if pad_size > 0:
-                # Fill the "missing" boxes with zeros
-                padding = np.full((pad_size, 4), 0)  # dummy boxes filled with zeros
+                padding = np.zeros((pad_size, 4), dtype=np.float32)
                 boxes = np.vstack([boxes, padding])
             padded_boxes.append(boxes)
 
-        padded_boxes = torch.tensor(padded_boxes, dtype=torch.float32)  # (batch, max_boxes, 4)
+        # Convert to tensor (batch, max_boxes, 4)
+        padded_boxes = torch.tensor(np.array(padded_boxes), dtype=torch.float32)
         return padded_boxes
+
 
     def not_all_equal2zero(self, *args):
         """
@@ -215,7 +220,7 @@ class VisionGauge:
             iterator = X
         else:
             # Wrap single tensor into batches of 1
-            iterator = [X[i:i+1] for i in range(X.shape[0])]
+            iterator = [x.unsqueeze(0) for x in X]
 
         # Iterate over batches
         for batch in tqdm(iterator, desc="Processing batches"):

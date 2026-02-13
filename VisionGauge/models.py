@@ -1,5 +1,4 @@
 
-#%%
 from unittest import loader
 import numpy as np
 from matplotlib import image
@@ -269,7 +268,7 @@ class VisionGauge:
     frame_color: str = "#551bb3",
     font_color: str = "#ffffff",
     fontsize: int = 10,
-    frame_thickness: int = 2,
+    frame_thickness: int = 4,
     display: bool = True
 ):
         """
@@ -299,8 +298,11 @@ class VisionGauge:
         display : bool, optional
             If True, displays the annotated stream.
         """
-
-        import matplotlib.colors as mcolors
+        print("Starting streaming...")
+       
+        # Logs variable to stop printing capture and prediction messages repeatedly
+        capture_logged = False
+        prediction_logged = False
 
         # Convert HEX → BGR
         rgb = mcolors.to_rgb(frame_color)
@@ -309,12 +311,24 @@ class VisionGauge:
         rgb_font = mcolors.to_rgb(font_color)
         font_color_tuple = tuple(int(c * 255) for c in rgb_font[::-1])
 
+        print("Trying to capture frame...")
+
         while True:
             ret, frame = camera.read()
             if not ret:
                 raise RuntimeError("Failed to capture frame from camera.")
+            
+            # Log capture success only once to avoid spamming the console
+            if not capture_logged:
+                print("Frame capture is working correctly.")
+                capture_logged = True
 
             boxes = self.predict_bounding_boxes(frame)
+
+            # Log prediction step only once to avoid spamming the console
+            if not prediction_logged:
+                print("Predicting bounding boxes...")
+                prediction_logged = True
 
             for box in boxes:
                 x1, y1, x2, y2 = box.astype(int)
@@ -347,7 +361,7 @@ class VisionGauge:
                 font_scale = fontsize / 10
 
                 (text_width, text_height), baseline = cv2.getTextSize(
-                    label, font, font_scale, frame_thickness
+                    label, font, font_scale, 2
                 )
 
                 # Dynamic padding proportional to thickness
@@ -376,7 +390,7 @@ class VisionGauge:
                     font,
                     font_scale,
                     font_color_tuple,
-                    frame_thickness
+                    2
                 )
 
             if display:

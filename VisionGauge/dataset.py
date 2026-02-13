@@ -3,6 +3,11 @@ import torch
 import cv2
 import os
 
+from pathlib import Path
+import importlib.resources as pkg_resources
+from VisionGauge import samples as samples_pkg
+
+
 class ImageDataset(Dataset):
     """
     Dataset class that supports both:
@@ -65,7 +70,7 @@ class Samples:
         samples_dir = os.path.join(root_dir, "samples")
 
         # Cria caminhos completos para os 50 arquivos sample1.jpg até sample50.jpg
-        self.paths = [os.path.join(samples_dir, f"sample{i}.jpg") for i in range(1, 51)]
+        self.paths = [Path(f) for f in pkg_resources.files(samples_pkg).iterdir() if f.suffix == ".jpg"]
 
 
     def get_images(self):

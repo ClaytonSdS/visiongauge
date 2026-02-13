@@ -1,4 +1,4 @@
-<img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/visiongauge_logo.png?raw=true" alt="model" width="800"/>
+<img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/vg.png?raw=true" alt="model" width="800"/>
 
 This work proposes a computer vision model based on the sequential implementation of machine learning models for the detection and reading of water column gauges, called VisionGauge.
 

@@ -14,6 +14,7 @@ dependencies = [
     "tqdm>=4.67.3",
     "opencv-python>=4.13.0",
     "numpy>=2.0.2",
+    "matplotlib>=3.10.0"
 ]
 authors = [
   {name = "Clayton Silva dos Santos", email = "santoscsdos@gmail.com"},

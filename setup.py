@@ -17,7 +17,8 @@ setup(
         "albumentations>=2.0.8",
         "tqdm>=4.67.3",
         "opencv-python>=4.13.0",
-        "numpy>=2.0.2"
+        "numpy>=2.0.2",
+        "matplotlib>=3.10.0"
     ],
     author="Clayton Silva dos Santos, Marcos Noboru Arima",
     author_email="santoscsdos@gmail.com, mnoboru@n-thermo.com.br",

@@ -262,7 +262,7 @@ class VisionGauge:
 
         return self.all_boxes, self.all_predictions
 
-    def plot_batch(self, image_index: int, figsize: tuple = (6, 6)):
+    def plot_batch(self, index: int=0, figsize: tuple = (6, 6)):
         """
         Plot all detected bounding boxes for a specific image, including
         the predicted h_p value for each detected region.
@@ -272,7 +272,7 @@ class VisionGauge:
         boxes along with their regression predictions.
 
         Args:
-            image_index (int):
+            index (int):
                 Index of the image to be visualized. Must be within the range
                 of predicted images.
 
@@ -286,24 +286,17 @@ class VisionGauge:
                 If the provided image_index is out of range.
         """
 
-        # ------------------------------------------------------------
-        # Safety checks
-        # ------------------------------------------------------------
-
-        # Ensure predictions exist (predict() must be called first)
+        # Safety checks: Ensure predictions exist (predict() must be called first)
         if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):
             raise ValueError("No predictions available. Please run predict() first.")
 
         # Validate image index against predictions
-        if image_index >= len(self.all_boxes):
+        if index >= len(self.all_boxes):
             raise ValueError(
                 f"Invalid image index. Must be between 0 and {self.all_boxes.shape[0] - 1}."
             )
 
-        # ------------------------------------------------------------
         # Reconstruct all images from stored DataLoader
-        # ------------------------------------------------------------
-
         all_images = []
         for batch in self.loader:
             all_images.append(batch)
@@ -311,16 +304,13 @@ class VisionGauge:
         # Concatenate into a single tensor (N_images, C, H, W)
         all_images = torch.cat(all_images, dim=0)
 
-        if image_index >= len(all_images):
+        if index >= len(all_images):
             raise ValueError(
                 f"image_index must be less than {len(all_images) - 1}"
             )
 
-        # ------------------------------------------------------------
         # Select and prepare the image for visualization
-        # ------------------------------------------------------------
-
-        image_tensor = all_images[image_index]  # (C, H, W)
+        image_tensor = all_images[index]  # (C, H, W)
 
         # Convert from CHW to HWC format for matplotlib
         image = image_tensor.permute(1, 2, 0).cpu().numpy()
@@ -333,11 +323,8 @@ class VisionGauge:
         else:
             plt.imshow(image.astype("uint8"))
 
-        # ------------------------------------------------------------
         # Draw all valid bounding boxes for this image
-        # ------------------------------------------------------------
-
-        for box_idx, box in enumerate(self.all_boxes[image_index]):
+        for box_idx, box in enumerate(self.all_boxes[index]):
 
             # Extract coordinates
             x1, y1, x2, y2 = box.int().tolist()
@@ -347,7 +334,7 @@ class VisionGauge:
                 continue
 
             # Retrieve corresponding prediction
-            pred = self.all_predictions[image_index, box_idx].item()
+            pred = self.all_predictions[index, box_idx].item()
 
             # Draw bounding box using official VisionGauge styling
             rect = plt.Rectangle(
@@ -378,5 +365,5 @@ class VisionGauge:
 
         # Remove axes for cleaner visualization
         plt.axis("off")
-        plt.title(f"Image {image_index}")
+        plt.title(f"Image {index}")
         plt.show()

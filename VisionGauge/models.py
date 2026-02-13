@@ -262,57 +262,94 @@ class VisionGauge:
 
         return self.all_boxes, self.all_predictions
 
-    
-    def plot_image_with_boxes(self, image_index):
+    def plot_batch(self, image_index: int, figsize: tuple = (6, 6)):
         """
-        Plota todos os bounding boxes detectados para uma imagem específica,
-        incluindo o valor previsto h_p.
+        Plot all detected bounding boxes for a specific image, including
+        the predicted h_p value for each detected region.
+
+        This method reconstructs the full image list from the stored DataLoader,
+        retrieves the selected image by index, and overlays all valid bounding
+        boxes along with their regression predictions.
 
         Args:
-            image_index (int): Índice da imagem a ser plotada.
+            image_index (int):
+                Index of the image to be visualized. Must be within the range
+                of predicted images.
+
+            figsize (tuple, optional):
+                Size of the matplotlib figure. Default is (6, 6).
+
+        Raises:
+            ValueError:
+                If predictions are not available (predict() was not called).
+            ValueError:
+                If the provided image_index is out of range.
         """
-        loader = self.loader
-        boxes = self.all_boxes 
-        predictions = self.all_predictions
 
+        # ------------------------------------------------------------
+        # Safety checks
+        # ------------------------------------------------------------
 
-        # ===== Unificar todas as imagens do loader =====
+        # Ensure predictions exist (predict() must be called first)
+        if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):
+            raise ValueError("No predictions available. Please run predict() first.")
+
+        # Validate image index against predictions
+        if image_index >= len(self.all_boxes):
+            raise ValueError(
+                f"Invalid image index. Must be between 0 and {self.all_boxes.shape[0] - 1}."
+            )
+
+        # ------------------------------------------------------------
+        # Reconstruct all images from stored DataLoader
+        # ------------------------------------------------------------
+
         all_images = []
-        for batch in loader:
+        for batch in self.loader:
             all_images.append(batch)
 
-        all_images = torch.cat(all_images, dim=0)  # (N_images, C, H, W)
+        # Concatenate into a single tensor (N_images, C, H, W)
+        all_images = torch.cat(all_images, dim=0)
 
         if image_index >= len(all_images):
-            raise ValueError(f"image_index deve ser menor que {len(all_images)-1}")
+            raise ValueError(
+                f"image_index must be less than {len(all_images) - 1}"
+            )
 
-        # ===== Selecionar imagem =====
-        image_tensor = all_images[image_index]
+        # ------------------------------------------------------------
+        # Select and prepare the image for visualization
+        # ------------------------------------------------------------
+
+        image_tensor = all_images[image_index]  # (C, H, W)
+
+        # Convert from CHW to HWC format for matplotlib
         image = image_tensor.permute(1, 2, 0).cpu().numpy()
 
-        print("Imagem shape:", image.shape)
-        print("Imagem min/max:", image.min(), image.max())
-        print("Boxes detectados:", boxes[image_index].shape[0])
+        plt.figure(figsize=figsize)
 
-        # ===== Plot =====
-        plt.figure(figsize=(6,6))
-
+        # Handle both float (0–1) and uint8 (0–255) image formats
         if image.max() <= 1.0:
             plt.imshow(np.clip(image, 0, 1))
         else:
             plt.imshow(image.astype("uint8"))
 
-        # ===== Iterar todos os boxes =====
-        for box_idx, box in enumerate(boxes[image_index]):
+        # ------------------------------------------------------------
+        # Draw all valid bounding boxes for this image
+        # ------------------------------------------------------------
+
+        for box_idx, box in enumerate(self.all_boxes[image_index]):
+
+            # Extract coordinates
             x1, y1, x2, y2 = box.int().tolist()
 
-            # Ignorar box dummy
+            # Skip dummy boxes (zero-padded entries)
             if x1 == y1 == x2 == y2 == 0:
                 continue
 
-            pred = predictions[image_index, box_idx].item()
+            # Retrieve corresponding prediction
+            pred = self.all_predictions[image_index, box_idx].item()
 
-            # Bounding box na cor #551bb3
+            # Draw bounding box using official VisionGauge styling
             rect = plt.Rectangle(
                 (x1, y1),
                 x2 - x1,
@@ -323,75 +360,23 @@ class VisionGauge:
             )
             plt.gca().add_patch(rect)
 
-            # Texto da predição
+            # Display predicted value above bounding box
             plt.text(
-                x1, y1 - 5,
+                x1,
+                y1 - 5,
                 f'$h_p$ = {pred:.2f}',
                 color='black',
                 fontsize=12,
                 fontweight='bold',
-                bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1)
+                bbox=dict(
+                    facecolor='white',
+                    alpha=0.5,
+                    edgecolor='none',
+                    pad=1
+                )
             )
 
+        # Remove axes for cleaner visualization
         plt.axis("off")
+        plt.title(f"Image {image_index}")
         plt.show()
-
-
-
-    def plot_batch(self, batch_number:int=0, figsize:tuple=(6,6)):
-        # Check if predictions exist
-        if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):
-            raise ValueError("No predictions available. Please run predict() first.")
-        
-        # Check if batch_number is valid
-        if batch_number >= len(self.all_boxes):
-            raise ValueError(f"Invalid batch number. Must be between 0 and {self.all_boxes.shape[0]-1}.")
-
-        # Iterate over the loader saved in self
-        for batch_idx, batch_images in enumerate(self.loader):
-            if batch_idx != batch_number:
-                continue  # skip batches that are not the chosen one
-
-            batch_boxes = self.all_boxes[batch_idx]
-            batch_preds = self.all_predictions[batch_idx]
-
-            # Ensure batch_boxes is 2D
-            if batch_boxes.dim() == 1:
-                batch_boxes = batch_boxes.unsqueeze(0)
-                batch_preds = batch_preds.unsqueeze(0)
-
-            # Iterate over all images in the batch
-            for img_idx in range(batch_images.shape[0]):
-                image = batch_images[img_idx].permute(1, 2, 0).cpu().numpy()  # convert to HWC
-
-                plt.figure(figsize=figsize)
-                plt.imshow(image.astype('uint8'))
-
-                # Draw boxes
-                for box_idx, box in enumerate(batch_boxes):
-                    x1, y1, x2, y2 = box.int().tolist()
-                    pred = batch_preds[box_idx].item()
-
-                    # Skip dummy boxes
-                    if x1 == y1 == x2 == y2 == 0:
-                        continue
-
-                    # Bounding box in color #551bb3
-                    rect = plt.Rectangle(
-                        (x1, y1), x2-x1, y2-y1, 
-                        edgecolor='#551bb3', facecolor='none', linewidth=2
-                    )
-                    plt.gca().add_patch(rect)
-
-                    # Prediction text in black and bold
-                    plt.text(
-                        x1, y1-5, f'$h_p$ = {pred:.2f}', 
-                        color='black', fontsize=12, fontweight='bold',
-                        bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1)
-                    )
-
-                plt.axis('off')
-                plt.show()
-            
-            break  # stop after plotting the chosen batch
-

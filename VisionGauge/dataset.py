@@ -45,10 +45,6 @@ class ImageDataset(Dataset):
             # Already a tensor (C, H, W)
             return self.images[idx]
 
-from datasets import load_dataset
-import numpy as np
-import torch
-from PIL import Image
 
 class Samples:
     """
@@ -118,6 +114,5 @@ class Samples:
             raise ValueError("No valid images available for tensor conversion.")
 
         return torch.stack(tensor_list)
-
 
 s = Samples()

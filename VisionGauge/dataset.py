@@ -45,6 +45,10 @@ class ImageDataset(Dataset):
             # Already a tensor (C, H, W)
             return self.images[idx]
 
+from datasets import load_dataset
+import numpy as np
+import torch
+from PIL import Image
 
 class Samples:
     """
@@ -56,7 +60,7 @@ class Samples:
         A list containing the images in RGB format.
     """
 
-    def __init__(self, n_samples=None):
+    def __init__(self):
         """
         Initializes the Samples class by loading n_samples images from the
         Hugging Face UTM_Samples dataset.
@@ -65,23 +69,28 @@ class Samples:
         dataset = load_dataset("claytonsds/UTM_Samples", split="train")
         self.images = []
 
-        # Use the minimum between requested n_samples and the dataset length
-        n_samples = n_samples or len(dataset)
-        n_samples = min(n_samples, len(dataset))
-
-        # Load images
-        for sample in dataset.select(range(n_samples)):
+        # Iterate over all samples in the dataset
+        for sample in dataset:
             img = sample["image"]
 
-            # Convert PIL image to numpy array if necessary
-            if hasattr(img, "convert"):
+            # Skip if the object is not a PIL Image
+            if not hasattr(img, "convert"):
+                continue
+
+            try:
+                # Ensure the image is in RGB format
+                img = img.convert("RGB")
                 img = np.array(img)
 
-            # Ensure the image dtype is uint8
-            if img.dtype != np.uint8:
-                img = (img * 255).astype(np.uint8)
+                # Ensure dtype is uint8
+                if img.dtype != np.uint8:
+                    img = (img * 255).astype(np.uint8)
 
-            self.images.append(img)
+                self.images.append(img)
+            except Exception as e:
+                # Skip corrupted images
+                print(f"Skipping invalid image: {e}")
+                continue
 
     def get_images(self):
         """
@@ -94,5 +103,21 @@ class Samples:
         Converts all loaded images into PyTorch tensors with shape (C, H, W)
         and stacks them into a single tensor.
         """
-        tensor = torch.stack([torch.from_numpy(img).permute(2, 0, 1).float() for img in self.images])
-        return tensor
+        # Stack images safely into a single tensor
+        tensor_list = []
+        for img in self.images:
+            try:
+                tensor = torch.from_numpy(img).permute(2, 0, 1).float()
+                tensor_list.append(tensor)
+            except Exception as e:
+                # Skip if conversion fails
+                print(f"Skipping image during tensor conversion: {e}")
+                continue
+
+        if len(tensor_list) == 0:
+            raise ValueError("No valid images available for tensor conversion.")
+
+        return torch.stack(tensor_list)
+
+
+s = Samples()

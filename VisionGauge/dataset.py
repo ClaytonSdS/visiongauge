@@ -1,8 +1,8 @@
+import numpy as np
 from torch.utils.data import Dataset
 from datasets import load_dataset
 import torch
 import cv2
-import numpy as np
 
 class ImageDataset(Dataset):
     """

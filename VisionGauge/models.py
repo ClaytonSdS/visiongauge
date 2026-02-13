@@ -1,7 +1,6 @@
 
 from unittest import loader
 import numpy as np
-from matplotlib import image
 import torch 
 import torch.nn as nn
 from torchvision import models
@@ -264,7 +263,7 @@ class VisionGauge:
 
     def predict_streaming(
     self,
-    camera,
+    camera: cv2.VideoCapture, frame_height: int = 1280, frame_width: int = 760,
     frame_color: str = "#551bb3",
     font_color: str = "#ffffff",
     fontsize: int = 10,
@@ -282,6 +281,12 @@ class VisionGauge:
         ----------
         camera : cv2.VideoCapture
             OpenCV capture object.
+
+        frame_height : int, optional
+            Desired height of the video frame.  
+
+        frame_width : int, optional
+            Desired width of the video frame.
 
         frame_color : str, optional
             Bounding box and label background color in HEX format.
@@ -317,6 +322,10 @@ class VisionGauge:
             ret, frame = camera.read()
             if not ret:
                 raise RuntimeError("Failed to capture frame from camera.")
+
+            # Adjust frame dimensions
+            frame.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+            frame.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
             
             # Log capture success only once to avoid spamming the console
             if not capture_logged:

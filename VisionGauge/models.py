@@ -262,6 +262,82 @@ class VisionGauge:
 
         return self.all_boxes, self.all_predictions
 
+    
+    def plot_image_with_boxes(self, image_index):
+        """
+        Plota todos os bounding boxes detectados para uma imagem específica,
+        incluindo o valor previsto h_p.
+
+        Args:
+            image_index (int): Índice da imagem a ser plotada.
+        """
+        loader = self.loader
+        boxes = self.all_boxes 
+        predictions = self.all_predictions
+
+
+        # ===== Unificar todas as imagens do loader =====
+        all_images = []
+        for batch in loader:
+            all_images.append(batch)
+
+        all_images = torch.cat(all_images, dim=0)  # (N_images, C, H, W)
+
+        if image_index >= len(all_images):
+            raise ValueError(f"image_index deve ser menor que {len(all_images)-1}")
+
+        # ===== Selecionar imagem =====
+        image_tensor = all_images[image_index]
+        image = image_tensor.permute(1, 2, 0).cpu().numpy()
+
+        print("Imagem shape:", image.shape)
+        print("Imagem min/max:", image.min(), image.max())
+        print("Boxes detectados:", boxes[image_index].shape[0])
+
+        # ===== Plot =====
+        plt.figure(figsize=(6,6))
+
+        if image.max() <= 1.0:
+            plt.imshow(np.clip(image, 0, 1))
+        else:
+            plt.imshow(image.astype("uint8"))
+
+        # ===== Iterar todos os boxes =====
+        for box_idx, box in enumerate(boxes[image_index]):
+            x1, y1, x2, y2 = box.int().tolist()
+
+            # Ignorar box dummy
+            if x1 == y1 == x2 == y2 == 0:
+                continue
+
+            pred = predictions[image_index, box_idx].item()
+
+            # Bounding box na cor #551bb3
+            rect = plt.Rectangle(
+                (x1, y1),
+                x2 - x1,
+                y2 - y1,
+                edgecolor='#551bb3',
+                facecolor='none',
+                linewidth=2
+            )
+            plt.gca().add_patch(rect)
+
+            # Texto da predição
+            plt.text(
+                x1, y1 - 5,
+                f'$h_p$ = {pred:.2f}',
+                color='black',
+                fontsize=12,
+                fontweight='bold',
+                bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1)
+            )
+
+        plt.axis("off")
+        plt.show()
+
+
+
     def plot_batch(self, batch_number:int=0, figsize:tuple=(6,6)):
         # Check if predictions exist
         if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):

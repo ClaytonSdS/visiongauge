@@ -193,14 +193,14 @@ class VisionGauge:
         5. Return predictions and boxes
 
         Args:
-            X (torch.Tensor, list of paths, or DataLoader): Batch tensor (B, C, H, W),
-                                                            DataLoader, or list of image paths.
+            X (torch.Tensor or DataLoader): Batch tensor (B, C, H, W) or DataLoader.
 
         Note:
             For boxes that were not detected in an image (dummy boxes with coordinates all zero),
             the corresponding crop is filled with zeros and the prediction is set to 0.
             This ensures that the predictions tensor has uniform shape (batch, max_boxes, 1) 
             across the batch.
+
 
         Returns:
             tuple:
@@ -210,38 +210,21 @@ class VisionGauge:
         all_boxes = []
         all_predictions = []
 
-        # Convert list of paths to tensor if needed
-        if isinstance(X, list) and all(isinstance(p, str) for p in X):
-            # Load all images and convert to tensor (C, H, W)
-            images = []
-            for path in X:
-                img = cv2.imread(path)
-                if img is None:
-                    raise ValueError(f"Could not read image at path: {path}")
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                images.append(torch.from_numpy(img).permute(2, 0, 1).float())
-            X = torch.stack(images)  # Shape: (batch, C, H, W)
-
-        # Wrap single tensor or DataLoader into iterable
+        # Check if X is a DataLoader or iterable
         if isinstance(X, torch.utils.data.DataLoader):
             iterator = X
-        elif isinstance(X, torch.Tensor):
-            iterator = [X]
         else:
-            raise ValueError("Input X must be a tensor, DataLoader, or list of paths.")
+            # Wrap single tensor into batches of 1
+            iterator = [X[i:i+1] for i in range(X.shape[0])]
 
         # Iterate over batches
         for batch in tqdm(iterator, desc="Processing batches"):
-            if isinstance(batch, tuple) or isinstance(batch, list):
-                # If DataLoader returns (inputs, labels), take first element
-                batch = batch[0]
-
-            batch_size, channels, height, width = batch.shape  # (B, C, H, W)
-            boxes = self.get_bounding_boxes(batch)            # (B, max_boxes, 4)
+            batches, channels, height, width = batch.shape  # (B, C, H, W)
+            boxes = self.get_bounding_boxes(batch)          # (B, max_boxes, 4)
             _, max_boxes, _ = boxes.shape
-            Y_Tensor = torch.zeros(batch_size, max_boxes, 1)
+            Y_Tensor = torch.zeros(batches, max_boxes, 1)
 
-            for b in range(batch_size):
+            for b in range(batches):
                 for i, box in enumerate(boxes[b]):
                     x1, y1, x2, y2 = box.int().tolist()
 
@@ -267,3 +250,4 @@ class VisionGauge:
         all_predictions = torch.cat(all_predictions, dim=0)
 
         return all_boxes, all_predictions
+

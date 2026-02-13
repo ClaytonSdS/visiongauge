@@ -70,6 +70,10 @@ loader = DataLoader(dataset, batch_size=16, shuffle=False)
 
 # Run predictions
 boxes, predictions = model.predict(loader)
+
+# Show the batch prediction
+model.plot_batch(0)
 ```
+<img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/output_example.png?raw=true" alt="model" width="300"/>
 
 

@@ -6,7 +6,7 @@ setup(
     description="A computer vision model to detect and read u-tube manometers.",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.12,<3.15",
+    python_requires=">=3.9,<3.15",
     packages=find_packages(where="."),  # procura na raiz
     install_requires=[
         "torch>=2.9.0",

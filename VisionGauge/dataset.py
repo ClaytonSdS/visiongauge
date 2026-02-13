@@ -57,7 +57,7 @@ class Samples:
         A list containing the images in RGB format.
     """
 
-    def __init__(self, n_samples=50):
+    def __init__(self):
         """
         Initializes the Samples class by loading n_samples images from the
         Hugging Face UTM_Samples dataset.
@@ -65,7 +65,7 @@ class Samples:
         dataset = load_dataset("claytonsds/UTM_Samples", split="train")
         self.images = []
 
-        for sample in dataset.select(range(n_samples)):
+        for sample in dataset.select(range(30)):
             img = sample["image"]
 
             if hasattr(img, "convert"):

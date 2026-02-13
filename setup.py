@@ -13,6 +13,7 @@ setup(
         "torchvision>=0.24.0",
         "ultralytics>=8.4.14",
         "huggingface_hub>=1.4.0",
+        "datasets>=4.0.0", 
         "albumentations>=2.0.8",
         "tqdm>=4.67.3",
         "opencv-python>=4.13.0",

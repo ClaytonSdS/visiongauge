@@ -1,3 +1,3 @@
 from .models import VisionGauge
 from .dataset import ImageDataset
-from .samples import Samples
+from .image_samples import Samples

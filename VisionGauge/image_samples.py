@@ -2,9 +2,6 @@ import torch
 import cv2
 
 
-import cv2
-import torch
-
 class Samples:
     """
     A class to load sample images from dataset.

@@ -318,3 +318,52 @@ class VisionGauge:
                 plt.show()
             
             break  # stop after plotting the chosen batch
+
+
+    def plot_batch_debug(self, batch_number:int=0, figsize:tuple=(6,6)):
+        if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):
+            raise ValueError("No predictions available. Please run predict() first.")
+        
+        if batch_number >= len(self.loader):
+            raise ValueError(f"Invalid batch number. Must be between 0 and {len(self.loader)-1}.")
+
+        for batch_idx, batch_images in enumerate(self.loader):
+            if batch_idx != batch_number:
+                continue
+
+            batch_boxes = self.all_boxes[batch_idx]
+            batch_preds = self.all_predictions[batch_idx]
+
+            print(f"Batch {batch_idx}: batch_images.shape = {batch_images.shape}")
+            print(f"Batch {batch_idx}: batch_boxes.shape = {batch_boxes.shape}")
+            print(f"Batch {batch_idx}: batch_preds.shape = {batch_preds.shape}")
+
+            for img_idx in range(batch_images.shape[0]):
+                image = batch_images[img_idx].permute(1,2,0).cpu().numpy()  # C,H,W -> H,W,C
+                print(f"Image {img_idx}: min={image.min():.4f}, max={image.max():.4f}, mean={image.mean():.4f}, dtype={image.dtype}")
+                
+                boxes_for_image = batch_boxes[img_idx]
+                preds_for_image = batch_preds[img_idx]
+                print(f"Image {img_idx}: boxes = {boxes_for_image}")
+                print(f"Image {img_idx}: predictions = {preds_for_image}")
+
+                plt.figure(figsize=figsize)
+                plt.imshow(np.clip(image, 0, 1))
+
+                for box_idx, box in enumerate(boxes_for_image):
+                    x1, y1, x2, y2 = box.int().tolist()
+                    pred = preds_for_image[box_idx].item()
+                    if x1 == y1 == x2 == y2 == 0:
+                        continue
+
+                    rect = plt.Rectangle(
+                        (x1, y1), x2-x1, y2-y1, 
+                        edgecolor='#551bb3', facecolor='none', linewidth=2
+                    )
+                    plt.gca().add_patch(rect)
+                    plt.text(x1, y1-5, f'$h_p$ = {pred:.2f}', color='black', fontsize=12, fontweight='bold',
+                            bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1))
+
+                plt.axis('off')
+                plt.show()
+            break

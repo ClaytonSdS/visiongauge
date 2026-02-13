@@ -9,6 +9,7 @@ from huggingface_hub import hf_hub_download
 import albumentations as A
 from albumentations.pytorch import ToTensorV2   
 from tqdm import tqdm
+import cv2
 
 class Regressor(nn.Module):
     def __init__(self, image_size: tuple = (120, 120)):

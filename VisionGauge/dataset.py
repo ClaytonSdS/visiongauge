@@ -1,12 +1,8 @@
 from torch.utils.data import Dataset
+from datasets import load_dataset
 import torch
 import cv2
-import os
-
-from pathlib import Path
-import importlib.resources as pkg_resources
-from VisionGauge import samples as samples_pkg
-
+import numpy as np
 
 class ImageDataset(Dataset):
     """
@@ -53,49 +49,43 @@ class ImageDataset(Dataset):
 
 class Samples:
     """
-    A class to load sample images from dataset.
+    A class to load sample images directly from the Hugging Face UTM_Samples dataset.
 
     Attributes
     ----------
-    paths : list of str
-        A list containing the file paths for the sample images.
+    images : list of numpy.ndarray
+        A list containing the images in RGB format.
     """
 
-    def __init__(self):
+    def __init__(self, n_samples=50):
         """
-        Initializes the Samples class by creating a list of file paths for
-        50 sample images located in the 'samples' folder.
+        Initializes the Samples class by loading n_samples images from the
+        Hugging Face UTM_Samples dataset.
         """
-        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        samples_dir = os.path.join(root_dir, "samples")
+        dataset = load_dataset("claytonsds/UTM_Samples", split="train")
+        self.images = []
 
-        # Cria caminhos completos para os 50 arquivos sample1.jpg até sample50.jpg
-        self.paths = [Path(f) for f in pkg_resources.files(samples_pkg).iterdir() if f.suffix == ".jpg"]
+        for sample in dataset.select(range(n_samples)):
+            img = sample["image"]
 
+            if hasattr(img, "convert"):
+                img = np.array(img)
+
+            if img.dtype != np.uint8:
+                img = (img * 255).astype(np.uint8)
+
+            self.images.append(img)
 
     def get_images(self):
         """
-        Loads all sample images from the stored file paths and converts them
-        from BGR to RGB format.
-
-        Returns
-        -------
-        list of numpy.ndarray
-            A list of images in RGB format.
+        Returns all loaded images in RGB format.
         """
-        return [cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB) for path in self.paths]
-    
+        return self.images
+
     def get_tensors(self):
         """
         Converts all loaded images into PyTorch tensors with shape (C, H, W)
         and stacks them into a single tensor.
-
-        Returns
-        -------
-        torch.Tensor
-            A tensor containing all images stacked along the first dimension.
-            Shape: (number_of_images, channels, height, width)
         """
-        images = self.get_images()
-        tensor = torch.stack([torch.from_numpy(img).permute(2, 0, 1).float() for img in images])
+        tensor = torch.stack([torch.from_numpy(img).permute(2, 0, 1).float() for img in self.images])
         return tensor

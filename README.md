@@ -8,8 +8,16 @@ During training, custom datasets were developed, specific to the training domain
 
 The best results composing VisionGauge were obtained with the detector model, achieving an F1-Score of 86.4%, together with the regressor architecture, which achieved an MAE of 1.872, both evaluated on the test dataset. Additionally, in the streaming mode evaluation, the model achieved an average global oscillation score (Φ) of 70%.
 
+---
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_1.gif" width="249" />
+  <img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_3.gif" width="249" />
+  <img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_4.gif" width="249" />
+  <img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_2.gif" width="249" />
+</p>
 
-<img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/visiongauge.png?raw=true" alt="model" width="800"/>
+---
+
 <a id="top"></a>
 
 ## Contents

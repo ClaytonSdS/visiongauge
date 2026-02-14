@@ -11,10 +11,10 @@ The best results composing VisionGauge were obtained with the detector model, ac
 ---
 <table align="center">
   <tr>
-    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_1.gif" width="180"/></td>
-    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_3.gif" width="180"/></td>
-    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_4.gif" width="180"/></td>
-    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_2.gif" width="180"/></td>
+    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_1.gif" width="260"/></td>
+    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_3.gif" width="260"/></td>
+    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_4.gif" width="260"/></td>
+    <td><img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/filling_2.gif" width="260"/></td>
   </tr>
 </table>
 

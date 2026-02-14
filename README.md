@@ -131,6 +131,8 @@ model.predict_streaming(
     fontsize=10
 )
 ```
+<img src="https://raw.githubusercontent.com/ClaytonSdS/VisionGauge_Files/main/dataset/testing/Oscilation/Filling/2tapes_2.gif" width="800"/>
+
 [↑ Top](#top)
 
 # Citation

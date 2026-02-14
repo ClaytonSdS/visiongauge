@@ -304,6 +304,9 @@ class VisionGauge:
             If True, displays the annotated stream.
         """
         print("Starting streaming...")
+        # Adjust camera frame dimensions
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
        
         # Logs variable to stop printing capture and prediction messages repeatedly
         capture_logged = False
@@ -323,9 +326,6 @@ class VisionGauge:
             if not ret:
                 raise RuntimeError("Failed to capture frame from camera.")
 
-            # Adjust frame dimensions
-            frame.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
-            frame.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
             
             # Log capture success only once to avoid spamming the console
             if not capture_logged:
@@ -517,3 +517,5 @@ class VisionGauge:
         # Remove axes for cleaner visualization
         plt.axis("off")
         plt.show()
+
+

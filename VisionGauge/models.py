@@ -186,6 +186,117 @@ class VisionGauge:
             if arg != 0:
                 return True
         return False
+    
+    def annotate_frame(
+        self,
+        frame,
+        boxes,
+        predictions,
+        frame_color: str = "#551bb3",
+        font_color: str = "#ffffff",
+        fontsize: int = 10,
+        frame_thickness: int = 4,
+    ):
+        """
+        Draw bounding boxes and predictions on a frame.
+
+        Parameters
+        ----------
+        frame : np.ndarray
+            Image in HWC BGR format (OpenCV standard).
+
+        boxes : torch.Tensor or np.ndarray
+            Bounding boxes (N, 4) → [x1, y1, x2, y2]
+
+        predictions : torch.Tensor or np.ndarray
+            Predictions (N, 1) or (N,)
+
+        Returns
+        -------
+        np.ndarray
+            Annotated frame.
+        """
+
+        annotated = frame.copy()
+
+        # Convert HEX → BGR
+        rgb = mcolors.to_rgb(frame_color)
+        frame_color_tuple = tuple(int(c * 255) for c in rgb[::-1])
+
+        rgb_font = mcolors.to_rgb(font_color)
+        font_color_tuple = tuple(int(c * 255) for c in rgb_font[::-1])
+
+        # Convert tensors → numpy if needed
+        if hasattr(boxes, "cpu"):
+            boxes = boxes.cpu().numpy()
+
+        if hasattr(predictions, "cpu"):
+            predictions = predictions.cpu().numpy()
+
+        # Ensure predictions is 1D
+        predictions = np.array(predictions).reshape(-1)
+
+        for i, box in enumerate(boxes):
+
+            x1, y1, x2, y2 = map(int, box)
+
+            # Skip dummy boxes
+            if x1 == y1 == x2 == y2 == 0:
+                continue
+
+            if i >= len(predictions):
+                continue
+
+            pred = float(predictions[i])
+
+            # Draw bounding box
+            cv2.rectangle(
+                annotated,
+                (x1, y1),
+                (x2, y2),
+                frame_color_tuple,
+                frame_thickness
+            )
+
+            label = f"h_p = {pred:.2f}"
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = fontsize / 10
+
+            (text_width, text_height), baseline = cv2.getTextSize(
+                label, font, font_scale, 2
+            )
+
+            padding = 5 + frame_thickness * 2
+
+            rect_x1 = x1
+            rect_x2 = x1 + text_width + padding
+
+            rect_y1 = max(0, y1 - text_height - padding)
+            rect_y2 = rect_y1 + text_height + padding
+
+            # Label background
+            cv2.rectangle(
+                annotated,
+                (rect_x1, rect_y1),
+                (rect_x2, rect_y2),
+                frame_color_tuple,
+                -1
+            )
+
+            # Label text
+            cv2.putText(
+                annotated,
+                label,
+                (rect_x1 + padding // 2, rect_y2 - padding // 2),
+                font,
+                font_scale,
+                font_color_tuple,
+                2
+            )
+
+        return annotated
+
 
     def predict(self, X):
         """
@@ -260,102 +371,63 @@ class VisionGauge:
         self.all_predictions = torch.cat(all_predictions, dim=0)
 
         return self.all_boxes, self.all_predictions
-
+    
     def predict_streaming(
-    self,
-    camera: cv2.VideoCapture, frame_height: int = 1280, frame_width: int = 720,
-    frame_color: str = "#551bb3",
-    font_color: str = "#ffffff",
-    fontsize: int = 10,
-    frame_thickness: int = 4,
-    display: bool = True
-):
+        self,
+        camera: cv2.VideoCapture,
+        frame_height: int = 1280,
+        frame_width: int = 720,
+        frame_color: str = "#551bb3",
+        font_color: str = "#ffffff",
+        fontsize: int = 10,
+        frame_thickness: int = 4,
+        display: bool = True
+    ):
         """
         Run real-time detection and regression on a live video stream.
-
-        Draws bounding boxes and predicted values on each detected object.
-        The predicted value is displayed inside a filled rectangle positioned
-        above the bounding box.
-
-        Parameters
-        ----------
-        camera : cv2.VideoCapture
-            OpenCV capture object.
-
-        frame_height : int, optional
-            Desired height of the video frame.  
-
-        frame_width : int, optional
-            Desired width of the video frame.
-
-        frame_color : str, optional
-            Bounding box and label background color in HEX format.
-
-        font_color : str, optional
-            Text color in HEX format.
-
-        fontsize : int, optional
-            Base font scaling factor (OpenCV scale = fontsize / 10).
-
-        frame_thickness : int, optional
-            Thickness of bounding box and text stroke.
-
-        display : bool, optional
-            If True, displays the annotated stream.
+        Uses annotate_frame() for drawing.
         """
+
         print("Starting streaming...")
-        # Adjust camera frame dimensions
+
         camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
         camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
-       
-        # Logs variable to stop printing capture and prediction messages repeatedly
-        capture_logged = False
-        prediction_logged = False
-
-        # Convert HEX → BGR
-        rgb = mcolors.to_rgb(frame_color)
-        frame_color_tuple = tuple(int(c * 255) for c in rgb[::-1])
-
-        rgb_font = mcolors.to_rgb(font_color)
-        font_color_tuple = tuple(int(c * 255) for c in rgb_font[::-1])
 
         print("Trying to capture frame...")
+
+        capture_logged = False
+        prediction_logged = False
 
         while True:
             ret, frame = camera.read()
             if not ret:
                 raise RuntimeError("Failed to capture frame from camera.")
 
-            
-            # Log capture success only once to avoid spamming the console
             if not capture_logged:
                 print("Frame capture is working correctly.")
                 capture_logged = True
 
             boxes = self.predict_bounding_boxes(frame)
 
-            # Log prediction step only once to avoid spamming the console
             if not prediction_logged:
                 print("Predicting bounding boxes...")
                 prediction_logged = True
+
+            predictions = []
 
             for box in boxes:
                 x1, y1, x2, y2 = box.astype(int)
 
                 if x1 == y1 == x2 == y2 == 0:
+                    predictions.append(0.0)
                     continue
 
-                # Draw bounding box
-                cv2.rectangle(
-                    frame,
-                    (x1, y1),
-                    (x2, y2),
-                    frame_color_tuple,
-                    frame_thickness
-                )
-
-                # Crop and preprocess
                 crop = frame[y1:y2, x1:x2]
+
+                if crop.size == 0:
+                    predictions.append(0.0)
+                    continue
+
                 h, w = crop.shape[:2]
                 max_size = max(h, w)
 
@@ -364,46 +436,23 @@ class VisionGauge:
                 with torch.no_grad():
                     pred = self.regressor(crop).item()
 
-                label = f"h_p = {pred:.2f}"
+                predictions.append(pred)
 
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                font_scale = fontsize / 10
+            predictions = np.array(predictions)
 
-                (text_width, text_height), baseline = cv2.getTextSize(
-                    label, font, font_scale, 2
-                )
-
-                # Dynamic padding proportional to thickness
-                padding = 5 + frame_thickness * 2
-
-                rect_x1 = x1
-                rect_x2 = x1 + text_width + padding
-
-                rect_y1 = max(0, y1 - text_height - padding)
-                rect_y2 = rect_y1 + text_height + padding
-
-                # Draw filled rectangle (label background)
-                cv2.rectangle(
-                    frame,
-                    (rect_x1, rect_y1),
-                    (rect_x2, rect_y2),
-                    frame_color_tuple,
-                    -1
-                )
-
-                # Draw text
-                cv2.putText(
-                    frame,
-                    label,
-                    (rect_x1 + padding // 2, rect_y2 - padding // 2),
-                    font,
-                    font_scale,
-                    font_color_tuple,
-                    2
-                )
+            # 🔥 Usa annotate_frame aqui
+            annotated_frame = self.annotate_frame(
+                frame,
+                boxes,
+                predictions,
+                frame_color=frame_color,
+                font_color=font_color,
+                fontsize=fontsize,
+                frame_thickness=frame_thickness,
+            )
 
             if display:
-                cv2.imshow("VisionGauge Streaming", frame)
+                cv2.imshow("VisionGauge Streaming", annotated_frame)
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -411,48 +460,25 @@ class VisionGauge:
         camera.release()
         cv2.destroyAllWindows()
 
-
-
-    def plot_batch(self, index: int=0, figsize: tuple = (6, 6)):
+    def plot_batch(self, index: int = 0, figsize: tuple = (6, 6)):
         """
-        Plot all detected bounding boxes for a specific image, including
-        the predicted h_p value for each detected region.
-
-        This method reconstructs the full image list from the stored DataLoader,
-        retrieves the selected image by index, and overlays all valid bounding
-        boxes along with their regression predictions.
-
-        Args:
-            index (int):
-                Index of the image to be visualized. Must be within the range
-                of predicted images.
-
-            figsize (tuple, optional):
-                Size of the matplotlib figure. Default is (6, 6).
-
-        Raises:
-            ValueError:
-                If predictions are not available (predict() was not called).
-            ValueError:
-                If the provided image_index is out of range.
+        Plot detected bounding boxes and predictions for a specific image.
+        Uses annotate_frame() for drawing.
         """
 
-        # Safety checks: Ensure predictions exist (predict() must be called first)
-        if not hasattr(self, 'all_boxes') or not hasattr(self, 'all_predictions'):
+        if not hasattr(self, "all_boxes") or not hasattr(self, "all_predictions"):
             raise ValueError("No predictions available. Please run predict() first.")
 
-        # Validate image index against predictions
         if index >= len(self.all_boxes):
             raise ValueError(
                 f"Invalid image index. Must be between 0 and {self.all_boxes.shape[0] - 1}."
             )
 
-        # Reconstruct all images from stored DataLoader
+        # Reconstruct all images
         all_images = []
         for batch in self.loader:
             all_images.append(batch)
 
-        # Concatenate into a single tensor (N_images, C, H, W)
         all_images = torch.cat(all_images, dim=0)
 
         if index >= len(all_images):
@@ -460,62 +486,32 @@ class VisionGauge:
                 f"image_index must be less than {len(all_images) - 1}"
             )
 
-        # Select and prepare the image for visualization
-        image_tensor = all_images[index]  # (C, H, W)
-
-        # Convert from CHW to HWC format for matplotlib
+        image_tensor = all_images[index]
         image = image_tensor.permute(1, 2, 0).cpu().numpy()
 
-        plt.figure(figsize=figsize)
-
-        # Handle both float (0–1) and uint8 (0–255) image formats
+        # If image is normalized (0–1), convert to uint8
         if image.max() <= 1.0:
-            plt.imshow(np.clip(image, 0, 1))
+            image = (np.clip(image, 0, 1) * 255).astype("uint8")
         else:
-            plt.imshow(image.astype("uint8"))
+            image = image.astype("uint8")
 
-        # Draw all valid bounding boxes for this image
-        for box_idx, box in enumerate(self.all_boxes[index]):
+        # Convert from RGB (matplotlib) to BGR (OpenCV) for annotation
+        image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-            # Extract coordinates
-            x1, y1, x2, y2 = box.int().tolist()
+        boxes = self.all_boxes[index]
+        predictions = self.all_predictions[index].squeeze(-1)
 
-            # Skip dummy boxes (zero-padded entries)
-            if x1 == y1 == x2 == y2 == 0:
-                continue
+        # Use annotate_frame
+        annotated_bgr = self.annotate_frame(
+            image_bgr,
+            boxes,
+            predictions,
+        )
 
-            # Retrieve corresponding prediction
-            pred = self.all_predictions[index, box_idx].item()
+        # convert back to RGB for plotting
+        annotated_rgb = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
 
-            # Draw bounding box using official VisionGauge styling
-            rect = plt.Rectangle(
-                (x1, y1),
-                x2 - x1,
-                y2 - y1,
-                edgecolor='#551bb3',
-                facecolor='none',
-                linewidth=2
-            )
-            plt.gca().add_patch(rect)
-
-            # Display predicted value above bounding box
-            plt.text(
-                x1,
-                y1 - 5,
-                f'$h_p$ = {pred:.2f}',
-                color='black',
-                fontsize=12,
-                fontweight='bold',
-                bbox=dict(
-                    facecolor='white',
-                    alpha=0.5,
-                    edgecolor='none',
-                    pad=1
-                )
-            )
-
-        # Remove axes for cleaner visualization
+        plt.figure(figsize=figsize)
+        plt.imshow(annotated_rgb)
         plt.axis("off")
         plt.show()
-
-

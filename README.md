@@ -25,17 +25,14 @@ The best results composing VisionGauge were obtained with the detector model, ac
 
 ## Contents
 - [Read the Paper](#read-the-article)
-- [How to Install](#how-to-install)
-- [Inference](#inference)
+- [How to Use](#how-to-use)
    * [PyPi Example](#pypi-example)
-   * [API Request](#api-request)
+   * [VisionGauge API](#visiongauge-api)
+   * [Python API Request](#python-api-request)
  - [Citation](#citation)
  - [References](#references)
 
-  
-# How to Install
-
-# Inference
+# How to Use
 ## PyPi Example:
 
 The first step you must take for PyPI inference is to install the library as follows:
@@ -79,7 +76,18 @@ max(bounding_boxes_predicted). This ensures that the predictions tensor has a un
 ```
 <img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/output_example.png?raw=true" alt="model" width="300"/>
 
-## API Request
+## VisionGauge API
+
+With this inference option (Huggingface + Gradio), you can use images or frames from a live capture, such as your webcam or phone camera, to perform inference.
+
+To use it, visit the interface available on Huggingface: [VisionGauge API](https://huggingface.co/spaces/claytonsds/VisionGauge).
+
+- To use live capture, select the **“Live Capture”** option at the top left of the interface.  
+- Otherwise, the default is the **“Image”** option, where you can upload an image from your desktop or mobile device.
+
+<img src="https://github.com/ClaytonSdS/VisionGauge_Files/blob/main/steps/example.gif?raw=true" alt="model" width="800"/>
+
+## Python API Request
 
 To perform inference using the VisionGauge model via an API request, the first step is to install the required client library:
 

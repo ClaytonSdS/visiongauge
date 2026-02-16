@@ -1,5 +1,11 @@
 
 # Inference
+<a id="top"></a>
+* [Inference Example I: List of Image Paths](#inference-example-i-list-of-image-paths)
+* [Inference Example II: Tensor Input](#inference-example-ii-tensor-input)
+* [Inference Example III: Frame Streaming](#inference-example-iii-frame-streaming)
+
+
 ## Inference Example I: List of Image Paths
 You can pass a list of image paths like:
 

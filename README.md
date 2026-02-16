@@ -91,18 +91,32 @@ The example below shows how to run inference using the VisionGauge API.
 
 ```python
 from gradio_client import Client, handle_file
+import json
 
 # Initialize the client for the VisionGauge model
 client = Client("claytonsds/VisionGauge")
 
 # Run inference on your image via API
-result = client.predict(
-    imagem=handle_file('/content/your_image.jpg'),
-    api_name="/VisionGauge_Inference"
+predictions = client.predict(
+	imagem=handle_file("/image_path/your_image.jpg"),
+	api_name="/VisionGauge_Inference"
 )
 
 # Display the result
-print(result)
+results = json.loads(predictions[1])
+print(result["values"])
+```
+```python
+{'0': {'coords': {'x1': 358, 'y1': 85, 'x2': 532, 'y2': 264}, 'h_p': 99.74},
+ '1': {'coords': {'x1': 58, 'y1': 87, 'x2': 275, 'y2': 304}, 'h_p': 99.74}}
+
+"""
+ The output is a dictionary where each key is the ID of a detected box.
+ Each box contains:
+   - "coords": a dictionary with the bounding box coordinates (x1, y1, x2, y2)
+   - "h_p": the predicted value for that box
+"""
+
 ```
 
 [↑ Top](#top)
